@@ -23,7 +23,7 @@ if (process.env.ENVIRONMENT === "dev") {
 
 //Routes
 app.use("/api/v1/ai", ai_router);
-
+//test debug logs
 
 //Health check
 app.get("/ping", (_req, res) => {
