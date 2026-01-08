@@ -1,0 +1,12 @@
+model Entitlement {
+    id         String   @id @default(uuid())
+    name       String
+    price      Float
+    plan_id    String?  @unique
+    is_limited Boolean  @default(true)
+    plan_limit Int?     @default(0)
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @default(now()) @updatedAt
+    // Relations
+    user       User[]   @relation("UserEntitlements")
+}

@@ -5,9 +5,15 @@ import morgan from "morgan"
 import { errorHandler } from "./middlwares/ErrorMiddleware.js"
 import logger from "./middlwares/logger.js"
 import { ai_router } from "./routes/ai.routes.js"
+import { PrismaPg } from "@prisma/adapter-pg"
+import { PrismaClient } from "./prisma/generated/prisma/client.js"
+import { connectDB } from "./lib/db.js"
+import { user_route } from "./routes/user.route.js"
 
 
 //Configurations
+const pool = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
+export const db = new PrismaClient({ adapter: pool })
 const app = express()
 dotenv.config()
 //Setting up socket server
@@ -23,7 +29,7 @@ if (process.env.ENVIRONMENT === "dev") {
 
 //Routes
 app.use("/api/v1/ai", ai_router);
-//test debug logs
+app.use("/api/v1/user", user_route);
 
 //Health check
 app.get("/ping", (_req, res) => {
@@ -39,8 +45,9 @@ const PORT = process.env.PORT || 8080
 
 
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
     logger.debug(`Backend server started on PORT ==> ${PORT}`);
+    await connectDB()
 });
 
 // Graceful shutdown

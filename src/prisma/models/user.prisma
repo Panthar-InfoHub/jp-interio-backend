@@ -1,0 +1,21 @@
+enum UserRole {
+    admin
+    user
+}
+
+model User {
+    id             String   @id @default(uuid())
+    email          String   @unique
+    name           String?
+    phone          String?  @unique
+    role           UserRole @default(user)
+    free_trial     Boolean  @default(true)
+    user_limit     Int      @default(0)
+    entitlement_id String?  @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+    // Relations
+    entitlements Entitlement? @relation("UserEntitlements", fields: [entitlement_id], references: [id])
+}

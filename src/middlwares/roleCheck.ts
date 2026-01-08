@@ -1,12 +1,7 @@
 import { NextFunction, Request, Response } from "express";
+import { UserRole } from "../prisma/generated/prisma/enums.js";
 
 
-export enum UserRole {
-    SUPER_ADMIN = 'SUPER_ADMIN',
-    ADMIN = 'ADMIN',
-    VENDOR = "VENDOR",
-    USER = "USER"
-}
 
 const roleAuth = (allowedRoles: UserRole[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -28,6 +23,4 @@ const roleAuth = (allowedRoles: UserRole[]) => {
     };
 };
 
-export const isSuperAdmin = roleAuth([UserRole.SUPER_ADMIN]);
-export const isAdmin = roleAuth([UserRole.SUPER_ADMIN, UserRole.ADMIN]);
-export const isVendor = roleAuth([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.VENDOR]);
+export const isSuperAdmin = roleAuth([UserRole.admin]);
