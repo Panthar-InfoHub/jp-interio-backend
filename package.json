@@ -4,7 +4,6 @@
   "main": "dist/server.js ",
   "type": "module",
   "scripts": {
-    "prepare": "npm run build",
     "build": "tsc",
     "dev": "nodemon --watch src --ext ts --exec \"npm run build && node ./dist/server.js\"",
     "gcp-build": "DATABASE_URL=\"postgresql://dummy:dummy@localhost:5432/dummy\" npx prisma generate && npm run build",
