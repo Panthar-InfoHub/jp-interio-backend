@@ -1,0 +1,63 @@
+enum SubscriptionStatus {
+    PENDING
+    ACTIVE
+    PAUSED
+    CANCELLED
+    EXPIRED
+    FAILED
+}
+
+enum PaymentStatus {
+    PENDING
+    SUCCESS
+    FAILED
+    REFUNDED
+}
+
+model UserSubscription {
+    id String @id @default(uuid())
+
+    // User and Plan Relations
+    user_id String
+    plan_id String
+
+    // Subscription Details
+    status         SubscriptionStatus @default(PENDING)
+    payment_status PaymentStatus      @default(PENDING)
+
+    // Cashfree Integration
+    cashfree_subscription_id String? @unique // subscription_id from Cashfree
+    cashfree_order_id        String? // For order-based plans
+    cashfree_payment_id      String? // payment_id from Cashfree
+
+    // Subscription Lifecycle
+    started_at        DateTime? // When subscription became active
+    expires_at        DateTime? // When subscription expires
+    next_billing_date DateTime? // Next billing cycle date
+    cancelled_at      DateTime? // When subscription was cancelled
+
+    // Usage Tracking
+    usage_count      Int? @default(0) // Current usage against limit
+    cycles_completed Int  @default(0) // Billing cycles completed
+
+    // Payment Details
+    amount_paid Float? // Amount paid for this subscription
+    currency    String @default("INR")
+
+    // Metadata
+    metadata Json? // Additional subscription data
+    notes    String? // Admin notes
+
+    // Timestamps
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+    // Relations
+    user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    plan Plan @relation(fields: [plan_id], references: [id])
+
+    @@index([user_id])
+    @@index([plan_id])
+    @@index([status])
+    @@map("user_subscriptions")
+}

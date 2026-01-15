@@ -9,7 +9,7 @@ model User {
     name           String?
     phone          String?  @unique
     role           UserRole @default(user)
-    free_trial     Boolean  @default(true)
+    free_trial     Int      @default(2)
     user_limit     Int      @default(0)
     entitlement_id String?  @unique
 
@@ -17,5 +17,6 @@ model User {
     updatedAt DateTime @default(now()) @updatedAt
 
     // Relations
-    entitlements Entitlement? @relation("UserEntitlements", fields: [entitlement_id], references: [id])
+    entitlements       Entitlement?       @relation("UserEntitlements", fields: [entitlement_id], references: [id])
+    user_subscriptions UserSubscription[]
 }

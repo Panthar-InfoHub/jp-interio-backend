@@ -1,0 +1,58 @@
+enum PlanType {
+    ORDER
+    SUBSCRIPTION
+}
+
+enum PlanStatus {
+    ACTIVE
+    INACTIVE
+    DRAFT
+}
+
+enum IntervalType {
+    MONTH
+    YEAR
+}
+
+model Plan {
+    id String @id @default(uuid())
+
+    // Basic Plan Info
+    name        String
+    description String?
+    plan_type   PlanType // ORDER or SUBSCRIPTION
+    status      PlanStatus @default(ACTIVE)
+
+    // Pricing
+    amount           Float // Main amount (order_amount for orders, plan_amount for subscriptions)
+    currency         String @default("INR")
+    recurring_amount Float? // Only for subscriptions (plan_recurring_amount)
+    max_amount       Float? // Maximum amount limit (plan_max_amount)
+
+    // Subscription specific fields
+    max_cycles    Int? // Maximum billing cycles (plan_max_cycles)
+    intervals     Int? // Interval count (plan_intervals)
+    interval_type IntervalType? // MONTH, YEAR (plan_interval_type)
+
+    // Limit Configuration
+    is_limited   Boolean @default(false)
+    limit_number Int?    @default(0) // Usage/access limit
+
+    // Cashfree Integration
+    cashfree_plan_id String? @unique // plan_id in Cashfree
+    cashfree_created Boolean @default(false)
+
+    // Metadata
+    metadata Json? // Flexible field for additional data
+    notes    String?
+
+    // Timestamps
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+    // Relations
+    entitlements       Entitlement[]
+    user_subscriptions UserSubscription[]
+
+    @@map("plans")
+}

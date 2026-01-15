@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { user_service } from "../service/user.service.js";
 import AppError from "./ErrorMiddleware.js";
 import { UserRole } from "../prisma/generated/prisma/enums.js";
+import logger from "./logger.js";
 
 interface resData {
     id: string,
@@ -28,7 +29,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
         if (!token) {
-            console.warn("No token provided")
+            logger.warn("No token provided")
             return res.status(401).json({
                 success: false,
                 message: 'Access token required'
@@ -41,7 +42,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
             role: ""
         }
 
-        console.debug("\n Decoded data ==> ", decoded)
+        logger.debug("\n Decoded data ==> ", decoded)
 
         const user = await user_service.findUserById(decoded.id);
 
@@ -53,7 +54,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
         resData.email = user.email;
         resData.role = user.role;
 
-        console.debug("User data from token ==> ", resData)
+        logger.debug("User data from token ==> ", resData)
 
         req.user = {
             id: resData.id,
@@ -70,7 +71,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
             });
         }
 
-        console.error("Error in authjs ==> ", error)
+        logger.error("Error in authjs ==> ", error)
         res.status(401).json({
             success: false,
             message: 'Invalid token'

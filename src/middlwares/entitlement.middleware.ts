@@ -2,6 +2,18 @@ import { NextFunction, Request, Response } from "express";
 import logger from "./logger.js";
 import { user_service } from "../service/user.service.js";
 import { entitlement_service } from "../service/entitlement.service.js";
+import AppError from "./ErrorMiddleware.js";
+
+declare global {
+    namespace Express {
+        interface Request {
+            entitle_check?: {
+                type: "free_trial" | "entitlement_unlimited" | "entitlement_limited";
+                entitlement_id?: string;
+            };
+        }
+    }
+}
 
 export const entitlement_check = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -15,6 +27,11 @@ export const entitlement_check = async (req: Request, res: Response, next: NextF
         }
 
         const user = await user_service.findUserById(auth_user.id);
+
+        if (!user) {
+            logger.warn(`User not found: ${auth_user.id}`);
+            throw new AppError("User not found, check user ID", 404);
+        }
         /**
          * Check if user have free trial or entitlement
          * If user is on free trial, allow access
@@ -22,66 +39,51 @@ export const entitlement_check = async (req: Request, res: Response, next: NextF
          * If user have entitlement and don't have free trial, allow access
          */
 
-        if (user?.free_trial && !user.entitlement_id) {
-            logger.info(`User ${auth_user.id} is on free trial`);
+        if (user.free_trial > 0) {
+            logger.debug(`User ${user.id} is on free trial with ${user.free_trial} tries left. Allowing access.`);
+            req.entitle_check = { type: "free_trial" };
             next();
             return;
         }
 
-        if (!user?.free_trial && !user?.entitlement_id) {
-            logger.warn(`User ${auth_user.id} has no entitlement and free trial expired`);
-            res.status(403).json({ success: false, message: "User completed their free trial. No entitlement found." });
+        // Neither free trial nor entitlement
+        if (!user.entitlement_id) {
+            logger.warn(`User ${user.id} has no entitlement and no free trial. Blocking access.`);
+            res.status(403).json({ success: false, message: "No entitlement or free trial available" });
             return;
         }
 
-        // If user have entitlement : validate entitlement and check limits here
-        if (!user.free_trial && user.entitlement_id) {
-            const entitlement = await entitlement_service.getEntitlementById(user.entitlement_id);
+        const entitlement = await entitlement_service.getEntitlementById(user.entitlement_id);
 
-            if (!entitlement) {
-                logger.warn(`Entitlement not found for user ${auth_user.id}`);
-                res.status(403).json({ success: false, message: "Entitlement not found or invalid." });
-                return;
-            }
+        if (!entitlement) {
+            logger.warn(`Entitlement not found for user ${user.id} with entitlement ID ${user.entitlement_id}`);
+            throw new AppError("Entitlement not found, check entitlement ID", 404);
+        }
 
-            //for entitlement that have limits : compare with user entitlement
-            if (entitlement.is_limited) {
-                if (entitlement.plan_limit && user.user_limit) {
-
-                    /**
-                     * Here user limit 0 mean : limit is decreasing as per use, eg : initially limit set to 10 when payment done,
-                     * then decrease limit as per usage, when limit reach to 0 block access
-                     * 
-                     * if user limit is greater than 0 allow access and decrease limit as per usage in respective service
-                     */
-                    if (user.user_limit === 0) {
-                        logger.warn(`User ${auth_user.id} has exceeded their entitlement limit`);
-                        res.status(403).json({ success: false, message: "Entitlement limit exceeded." });
-                        return;
-                    }
-
-                    logger.debug(`User ${auth_user.id} is within their entitlement limit`);
-                    await user_service.updateUser(user.id, { user_limit: user.user_limit - 1 });
-                    next();
-                    return;
-                } else {
-                    logger.warn(`Entitlement plan limit or user limit not set for user ${auth_user.id}`);
-                    res.status(403).json({ success: false, message: "Entitlement limit information is incomplete." });
-                    return;
-                }
-            }
-
-            // Entitlement is_limited = false : no limit entitlement : user limit == 0 && entitlement limit == 0
-            logger.debug(`User ${auth_user.id} has unlimited entitlement`);
+        // Unlimited tries entitlement
+        if (!entitlement.is_limited) {
+            logger.debug(`User ${user.id} has unlimited entitlement. Allowing access.`);
+            req.entitle_check = { type: "entitlement_unlimited" };
             next();
             return;
         }
 
-        logger.error(`Entitlement check failed for user ${auth_user.id} due to unknown reasons`);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error during entitlement check."
-        });
+        /**
+         * IF every condition fails and we have here,  
+         * solely mean : the entitlement is limited and we need to check usage count
+         * Our tries count backend : eg from 10 -> 0
+         */
+
+        if (user.user_limit <= 0) {
+            logger.warn(`User ${user.id} has exhausted their entitlement usage count. Blocking access.`);
+            res.status(403).json({ success: false, message: "Entitlement usage limit exceeded" });
+            return;
+        }
+
+        // User has valid entitlement with remaining usage count
+        logger.debug(`User ${user.id} has valid entitlement with ${user.user_limit} uses left. Allowing access.`);
+        req.entitle_check = { type: "entitlement_limited", entitlement_id: user.entitlement_id };
+        next();
         return;
 
     } catch (error) {

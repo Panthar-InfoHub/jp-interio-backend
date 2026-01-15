@@ -23,4 +23,4 @@ const roleAuth = (allowedRoles: UserRole[]) => {
     };
 };
 
-export const isSuperAdmin = roleAuth([UserRole.admin]);
+export const isAdmin = roleAuth([UserRole.admin]);

@@ -9,6 +9,10 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient } from "./prisma/generated/prisma/client.js"
 import { connectDB } from "./lib/db.js"
 import { user_route } from "./routes/user.route.js"
+import { auth_router } from "./routes/auth.routes.js"
+import { plan_router } from "./routes/plan.routes.js"
+import { webhook_router } from "./routes/webhook.routes.js"
+import { payment_router } from "./routes/payment.routes.js"
 
 
 //Configurations
@@ -17,6 +21,12 @@ export const db = new PrismaClient({ adapter: pool })
 const app = express()
 dotenv.config()
 //Setting up socket server
+
+
+
+// Webhook route with raw body parser : above express.json() middleware
+app.use("/api/v1/webhook", webhook_router);
+
 
 //Middlewares
 app.use(cors())
@@ -29,7 +39,10 @@ if (process.env.ENVIRONMENT === "dev") {
 
 //Routes
 app.use("/api/v1/ai", ai_router);
+app.use("/api/v1/payment", payment_router);
 app.use("/api/v1/user", user_route);
+app.use("/api/v1/plan", plan_router);
+app.use("/api/v1/auth", auth_router);
 
 //Health check
 app.get("/ping", (_req, res) => {

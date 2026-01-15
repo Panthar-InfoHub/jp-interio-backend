@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Entitlement" ADD COLUMN     "is_limited" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "plan_limit" INTEGER DEFAULT 0,
+ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "user_limit" INTEGER NOT NULL DEFAULT 0;

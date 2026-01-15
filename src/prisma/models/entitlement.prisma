@@ -9,4 +9,5 @@ model Entitlement {
     updatedAt  DateTime @default(now()) @updatedAt
     // Relations
     user       User[]   @relation("UserEntitlements")
+    plan       Plan?    @relation(fields: [plan_id], references: [id])
 }
