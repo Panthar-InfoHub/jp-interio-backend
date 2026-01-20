@@ -195,6 +195,23 @@ class PlanServiceClass {
         if (!user) throw new AppError("User not found for creating Order", 404);
 
         try {
+
+            //Check already existing PENDING or ACTIVE subscription for the same plan
+            const existing_subscription = await db.userSubscription.findFirst({
+                where: {
+                    user_id: user_id,
+                    plan_id: plan_id,
+                    OR: [
+                        { status: 'ACTIVE' },
+                        { status: 'PENDING' }
+                    ]
+                }
+            });
+
+            if (existing_subscription) {
+                throw new AppError("An active or pending subscription already exists for this plan", 400);
+            }
+
             // 1. Create Order in Cashfree
             // Uniquely identify the order using a combination of plan, user, and timestamp
             const order_id = `ORDER_${plan.plan_type}_${user_id.substring(0, 5)}_${Date.now()}`;
