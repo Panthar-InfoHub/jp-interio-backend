@@ -227,8 +227,7 @@ class PlanServiceClass {
                     customer_name: user.name || "User"
                 },
                 order_meta: {
-                    return_url: `https://pantharinfohub.com/status?order_id=${order_id}`,
-                    // notify_url: `https://your-backend.com/api/webhook/cashfree`
+                    return_url: process.env.RETURN_URL || "www.spzaora.com",
                 },
                 order_id: order_id,
                 order_note: `Purchase of ${plan.name}`

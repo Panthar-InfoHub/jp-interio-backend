@@ -41,6 +41,9 @@ class PaymentServiceClass {
                     customer_phone: user.phone || '9026600000', // Phone is often mandatory for subscriptions
                     customer_name: user.name || 'User'
                 },
+                subscription_meta: {
+                    return_url: process.env.RETURN_URL || "www.spzaora.com"
+                },
                 subscription_note: `Subscription for ${plan.name}`
             };
 

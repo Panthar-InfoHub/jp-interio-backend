@@ -44,9 +44,9 @@ class WebhookServiceClass {
      */
     async subscriptionPaymentSuccess(data: any) {
         // Use 'subscription_id' (Merchant ID) effectively to find our record
+        logger.info(`Processing Subscription Payload: ${data}`);
         const cf_subscription_id = data.cf_subscription_id;
 
-        logger.debug(`Processing Subscription Payment Success for: ${cf_subscription_id}`);
 
         const userSubscription = await db.userSubscription.findFirst({
             where: {

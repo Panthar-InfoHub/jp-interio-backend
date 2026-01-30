@@ -2,7 +2,7 @@ model Entitlement {
     id         String   @id @default(uuid())
     name       String
     price      Float
-    plan_id    String?  @unique
+    plan_id    String?
     is_limited Boolean  @default(true)
     plan_limit Int?     @default(0)
     createdAt  DateTime @default(now())
