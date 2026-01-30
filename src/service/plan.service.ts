@@ -196,20 +196,17 @@ class PlanServiceClass {
 
         try {
 
-            //Check already existing PENDING or ACTIVE subscription for the same plan
+            //Check already existing ACTIVE subscription for the same plan
             const existing_subscription = await db.userSubscription.findFirst({
                 where: {
                     user_id: user_id,
                     plan_id: plan_id,
-                    OR: [
-                        { status: 'ACTIVE' },
-                        { status: 'PENDING' }
-                    ]
+                    status: 'ACTIVE',
                 }
             });
 
             if (existing_subscription) {
-                throw new AppError("An active or pending subscription already exists for this plan", 400);
+                throw new AppError("An active subscription already exists for this plan", 400);
             }
 
             // 1. Create Order in Cashfree
@@ -253,7 +250,7 @@ class PlanServiceClass {
                 }
             });
 
-            logger.info(`Order created: ${order_id}. Subscription: ${subscription.id}. Waiting for webhook to attach Entitlement.`);
+            logger.info(`Order created: ${order_id}.Subscription: ${subscription.id}. Waiting for webhook to attach Entitlement.`);
 
             return {
                 payment_session_id: payment_session_id,
